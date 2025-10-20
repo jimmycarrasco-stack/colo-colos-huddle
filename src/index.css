@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Colo Colo Brand Colors - Bold Black & White with Red Accents */
+    /* Colo Colo Brand Colors - Bold Black & Blue */
     --background: 0 0% 98%;
     --foreground: 0 0% 5%;
 
@@ -29,8 +29,8 @@ All colors MUST be HSL.
     --muted: 0 0% 92%;
     --muted-foreground: 0 0% 40%;
 
-    /* Accent: Vibrant Red for CTAs */
-    --accent: 0 84% 55%;
+    /* Accent: Colo Colo Blue for CTAs */
+    --accent: 220 85% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -38,15 +38,16 @@ All colors MUST be HSL.
 
     --border: 0 0% 88%;
     --input: 0 0% 88%;
-    --ring: 0 84% 55%;
+    --ring: 220 85% 45%;
 
     --radius: 0.75rem;
 
     /* Custom Design Tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 5%) 0%, hsl(0 0% 15%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 85% 20%) 0%, hsl(220 85% 35%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 98%) 100%);
     --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
     --shadow-elevated: 0 10px 40px rgba(0, 0, 0, 0.12);
+    --shadow-blue: 0 8px 30px rgba(29, 78, 155, 0.15);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -69,7 +70,7 @@ All colors MUST be HSL.
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 0 84% 55%;
+    --accent: 220 85% 55%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -77,12 +78,13 @@ All colors MUST be HSL.
 
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 0 84% 55%;
+    --ring: 220 85% 55%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 5%) 0%, hsl(0 0% 12%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 85% 15%) 0%, hsl(220 85% 25%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 10%) 0%, hsl(0 0% 8%) 100%);
     --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
     --shadow-elevated: 0 10px 40px rgba(0, 0, 0, 0.6);
+    --shadow-blue: 0 8px 30px rgba(29, 78, 155, 0.3);
   }
 }
 
@@ -115,6 +117,10 @@ All colors MUST be HSL.
   
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
+  }
+  
+  .shadow-blue {
+    box-shadow: var(--shadow-blue);
   }
   
   .transition-smooth {

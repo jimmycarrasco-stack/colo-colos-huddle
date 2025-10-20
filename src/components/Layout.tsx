@@ -10,6 +10,7 @@ import {
   LogOut 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import coloColoLogo from '@/assets/colo-colo-logo.png';
 
 const Layout = () => {
   const { signOut } = useAuth();
@@ -25,12 +26,14 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-card shadow-card">
+      <header className="sticky top-0 z-50 w-full border-b bg-card shadow-blue">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">CC</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <img 
+              src={coloColoLogo} 
+              alt="Colo Colo Logo" 
+              className="h-12 w-12 object-contain"
+            />
             <h1 className="text-2xl font-bold">Colo Colo</h1>
           </div>
           <Button variant="ghost" size="sm" onClick={signOut}>

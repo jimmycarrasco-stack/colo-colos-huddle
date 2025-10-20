@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Upload } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useEffect } from 'react';
+import coloColoLogo from '@/assets/colo-colo-logo.png';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -105,14 +106,23 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
-      <Card className="w-full max-w-md shadow-elevated">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold text-center">
-            Colo Colo
-          </CardTitle>
-          <CardDescription className="text-center">
-            {isLogin ? 'Welcome back to the team' : 'Join the Colo Colo team'}
-          </CardDescription>
+      <Card className="w-full max-w-md shadow-blue">
+        <CardHeader className="space-y-4">
+          <div className="flex justify-center">
+            <img 
+              src={coloColoLogo} 
+              alt="Colo Colo Logo" 
+              className="h-24 w-24 object-contain"
+            />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="text-3xl font-bold text-center">
+              Colo Colo
+            </CardTitle>
+            <CardDescription className="text-center">
+              {isLogin ? 'Welcome back to the team' : 'Join the Colo Colo team'}
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
