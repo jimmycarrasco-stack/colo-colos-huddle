@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, Loader2, Award, Users } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminPlayers from './AdminPlayers';
+import AdminSchedule from './AdminSchedule';
 
 interface Player {
   id: string;
@@ -26,6 +29,8 @@ const Admin = () => {
     wins: 0,
     losses: 0,
     draws: 0,
+    goals_for: 0,
+    goals_against: 0,
   });
 
   const [playerStatUpdate, setPlayerStatUpdate] = useState({
@@ -69,6 +74,8 @@ const Admin = () => {
             wins: statsData.wins,
             losses: statsData.losses,
             draws: statsData.draws,
+            goals_for: statsData.goals_for || 0,
+            goals_against: statsData.goals_against || 0,
           });
         }
       }
@@ -214,7 +221,16 @@ const Admin = () => {
         <h2 className="text-3xl font-bold">Admin Controls</h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Tabs defaultValue="stats" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="stats">Stats</TabsTrigger>
+          <TabsTrigger value="players">Players</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="roles">Roles</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="stats" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -253,6 +269,26 @@ const Admin = () => {
                   min="0"
                   value={teamStats.draws}
                   onChange={(e) => setTeamStats({ ...teamStats, draws: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="goals_for">Goals For</Label>
+                <Input
+                  id="goals_for"
+                  type="number"
+                  min="0"
+                  value={teamStats.goals_for}
+                  onChange={(e) => setTeamStats({ ...teamStats, goals_for: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="goals_against">Goals Against</Label>
+                <Input
+                  id="goals_against"
+                  type="number"
+                  min="0"
+                  value={teamStats.goals_against}
+                  onChange={(e) => setTeamStats({ ...teamStats, goals_against: parseInt(e.target.value) || 0 })}
                 />
               </div>
               <Button type="submit" variant="accent" className="w-full">
@@ -326,37 +362,49 @@ const Admin = () => {
             </form>
           </CardContent>
         </Card>
-
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
-              Grant Admin Access
-            </CardTitle>
-            <CardDescription>Give admin privileges to a player</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="admin-player">Select Player</Label>
-              <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a player" />
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map((player) => (
-                    <SelectItem key={player.id} value={player.id}>
-                      {player.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleGrantAdmin} variant="accent" className="w-full">
-              Grant Admin Access
-            </Button>
-          </CardContent>
-        </Card>
       </div>
+        </TabsContent>
+
+        <TabsContent value="players">
+          <AdminPlayers />
+        </TabsContent>
+
+        <TabsContent value="schedule">
+          <AdminSchedule />
+        </TabsContent>
+
+        <TabsContent value="roles">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Grant Admin Access
+              </CardTitle>
+              <CardDescription>Give admin privileges to a player</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin-player">Select Player</Label>
+                <Select value={selectedPlayer} onValueChange={setSelectedPlayer}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a player" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {players.map((player) => (
+                      <SelectItem key={player.id} value={player.id}>
+                        {player.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleGrantAdmin} variant="accent" className="w-full">
+                Grant Admin Access
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

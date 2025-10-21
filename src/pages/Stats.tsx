@@ -7,6 +7,8 @@ interface TeamStats {
   wins: number;
   losses: number;
   draws: number;
+  goals_for?: number;
+  goals_against?: number;
 }
 
 interface PlayerStat {
@@ -70,7 +72,7 @@ const Stats = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold">Team Statistics</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Games</CardTitle>
@@ -99,15 +101,30 @@ const Stats = () => {
 
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Goals</CardTitle>
+            <CardTitle className="text-sm font-medium">Goals For</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {playerStats.reduce((sum, p) => sum + p.goals, 0)}
+              {teamStats?.goals_for || playerStats.reduce((sum, p) => sum + p.goals, 0)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Team total
+              Goals scored
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Goals Against</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {teamStats?.goals_against || 0}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Goals conceded
             </p>
           </CardContent>
         </Card>
