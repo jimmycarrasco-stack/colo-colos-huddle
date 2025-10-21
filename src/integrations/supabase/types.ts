@@ -131,6 +131,8 @@ export type Database = {
       team_stats: {
         Row: {
           draws: number
+          goals_against: number
+          goals_for: number
           id: string
           losses: number
           updated_at: string
@@ -139,6 +141,8 @@ export type Database = {
         }
         Insert: {
           draws?: number
+          goals_against?: number
+          goals_for?: number
           id?: string
           losses?: number
           updated_at?: string
@@ -147,6 +151,8 @@ export type Database = {
         }
         Update: {
           draws?: number
+          goals_against?: number
+          goals_for?: number
           id?: string
           losses?: number
           updated_at?: string
