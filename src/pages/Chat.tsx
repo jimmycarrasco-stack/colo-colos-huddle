@@ -46,7 +46,7 @@ const Chat = () => {
         .from('messages')
         .select(`
           *,
-          profiles!messages_user_id_fkey (full_name, avatar_url)
+          profiles (full_name, avatar_url)
         `)
         .order('created_at', { ascending: true });
 
@@ -80,7 +80,7 @@ const Chat = () => {
             .from('messages')
             .select(`
               *,
-              profiles!messages_user_id_fkey (full_name, avatar_url)
+              profiles (full_name, avatar_url)
             `)
             .eq('id', payload.new.id)
             .single();
