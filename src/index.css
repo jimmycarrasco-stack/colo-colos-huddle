@@ -8,10 +8,10 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* remove lovable button
     #lovable-badge {
       display: none !important;
     }
+    
     /* Colo Colo Brand Colors - Bold Black & Blue */
     --background: 0 0% 98%;
     --foreground: 0 0% 5%;
