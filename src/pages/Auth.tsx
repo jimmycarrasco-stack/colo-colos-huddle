@@ -10,6 +10,7 @@ import { Loader2, Upload, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useEffect } from 'react';
 import coloColoLogo from '@/assets/colo-colo-logo.png';
+import { z } from 'zod';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -48,6 +49,33 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate signup inputs
+      if (!isLogin) {
+        const signupSchema = z.object({
+          email: z.string().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
+          password: z.string().min(6, 'Password must be at least 6 characters'),
+          fullName: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+          position: z.string().trim().max(50, 'Position must be less than 50 characters').optional(),
+        });
+
+        signupSchema.parse({
+          email: email,
+          password: password,
+          fullName: fullName,
+          position: position || undefined,
+        });
+
+        // Validate avatar file size (5MB limit)
+        if (avatarFile && avatarFile.size > 5 * 1024 * 1024) {
+          throw new Error('Avatar file must be less than 5MB');
+        }
+
+        // Validate avatar file type
+        if (avatarFile && !avatarFile.type.startsWith('image/')) {
+          throw new Error('Avatar must be an image file');
+        }
+      }
+
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email,

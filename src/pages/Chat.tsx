@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Send, Loader2, Image, UserCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { z } from 'zod';
 
 interface Profile {
   full_name: string;
@@ -107,6 +108,25 @@ const Chat = () => {
 
     setSending(true);
     try {
+      // Validate message content
+      const messageSchema = z.object({
+        content: z.string().max(2000, 'Message must be less than 2000 characters').optional(),
+      });
+
+      if (newMessage.trim()) {
+        messageSchema.parse({ content: newMessage });
+      }
+
+      // Validate media file
+      if (mediaFile) {
+        if (mediaFile.size > 10 * 1024 * 1024) {
+          throw new Error('Media file must be less than 10MB');
+        }
+        if (!mediaFile.type.startsWith('image/') && !mediaFile.type.startsWith('video/')) {
+          throw new Error('Only image and video files are allowed');
+        }
+      }
+
       let mediaUrl = null;
       let mediaType = null;
 

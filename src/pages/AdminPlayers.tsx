@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { z } from 'zod';
 
 interface Player {
   id: string;
@@ -42,21 +43,25 @@ const AdminPlayers = () => {
   const handleEditPlayer = async () => {
     if (!editingPlayer) return;
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: editForm.full_name,
-        position: editForm.position,
-      })
-      .eq('id', editingPlayer.id);
+    // Validate input
+    const profileSchema = z.object({
+      full_name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+      position: z.string().trim().max(50, 'Position must be less than 50 characters').optional(),
+    });
 
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update player profile',
-        variant: 'destructive',
-      });
-    } else {
+    try {
+      const validated = profileSchema.parse(editForm);
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: validated.full_name,
+          position: validated.position || null,
+        })
+        .eq('id', editingPlayer.id);
+
+      if (error) throw error;
+
       toast({
         title: 'Success',
         description: 'Player profile updated successfully',
@@ -64,6 +69,12 @@ const AdminPlayers = () => {
       setDialogOpen(false);
       setEditingPlayer(null);
       fetchPlayers();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update player profile',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -73,18 +84,12 @@ const AdminPlayers = () => {
     }
 
     try {
-      // First delete the profile (this will cascade to player_stats)
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', playerId);
+      // Call secure Edge Function for user deletion
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: playerId }
+      });
 
-      if (profileError) throw profileError;
-
-      // Delete the auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(playerId);
-      
-      if (authError) throw authError;
+      if (error) throw error;
 
       toast({
         title: 'Success',

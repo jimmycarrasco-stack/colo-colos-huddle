@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2, Edit, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { z } from 'zod';
 
 interface Event {
   id: string;
@@ -54,21 +55,32 @@ const AdminSchedule = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    if (isCreating) {
-      const { error } = await supabase
-        .from('schedule')
-        .insert({
-          ...eventForm,
-          created_by: user.id,
-        });
+    // Validate event inputs
+    const eventSchema = z.object({
+      title: z.string().trim().min(1, 'Title is required').max(100, 'Title must be less than 100 characters'),
+      description: z.string().trim().max(500, 'Description must be less than 500 characters').optional(),
+      event_type: z.enum(['match', 'training', 'event']),
+      event_date: z.string().min(1, 'Date is required'),
+      location: z.string().trim().max(200, 'Location must be less than 200 characters').optional(),
+    });
 
-      if (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to create event',
-          variant: 'destructive',
-        });
-      } else {
+    try {
+      const validated = eventSchema.parse(eventForm);
+
+      if (isCreating) {
+        const { error } = await supabase
+          .from('schedule')
+          .insert({
+            title: validated.title,
+            description: validated.description || null,
+            event_type: validated.event_type,
+            event_date: validated.event_date,
+            location: validated.location || null,
+            created_by: user.id,
+          });
+
+        if (error) throw error;
+
         toast({
           title: 'Success',
           description: 'Event created successfully',
@@ -76,20 +88,20 @@ const AdminSchedule = () => {
         setDialogOpen(false);
         fetchEvents();
         resetForm();
-      }
-    } else if (editingEvent) {
-      const { error } = await supabase
-        .from('schedule')
-        .update(eventForm)
-        .eq('id', editingEvent.id);
+      } else if (editingEvent) {
+        const { error } = await supabase
+          .from('schedule')
+          .update({
+            title: validated.title,
+            description: validated.description || null,
+            event_type: validated.event_type,
+            event_date: validated.event_date,
+            location: validated.location || null,
+          })
+          .eq('id', editingEvent.id);
 
-      if (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to update event',
-          variant: 'destructive',
-        });
-      } else {
+        if (error) throw error;
+
         toast({
           title: 'Success',
           description: 'Event updated successfully',
@@ -99,6 +111,12 @@ const AdminSchedule = () => {
         fetchEvents();
         resetForm();
       }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save event',
+        variant: 'destructive',
+      });
     }
   };
 
