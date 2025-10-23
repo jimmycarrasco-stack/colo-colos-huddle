@@ -43,7 +43,7 @@ const Stats = () => {
         .from('player_stats')
         .select(`
           *,
-          profiles!player_stats_user_id_fkey (full_name)
+          profiles (full_name)
         `)
         .order('goals', { ascending: false });
 

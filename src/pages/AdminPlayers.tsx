@@ -68,27 +68,35 @@ const AdminPlayers = () => {
   };
 
   const handleDeletePlayer = async (playerId: string, playerName: string) => {
-    if (!confirm(`Are you sure you want to delete ${playerName}? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${playerName}? This will permanently delete their account and all associated data.`)) {
       return;
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', playerId);
+    try {
+      // First delete the profile (this will cascade to player_stats)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', playerId);
 
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete player',
-        variant: 'destructive',
-      });
-    } else {
+      if (profileError) throw profileError;
+
+      // Delete the auth user
+      const { error: authError } = await supabase.auth.admin.deleteUser(playerId);
+      
+      if (authError) throw authError;
+
       toast({
         title: 'Success',
-        description: 'Player deleted successfully',
+        description: 'Player and account deleted permanently',
       });
       fetchPlayers();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete player',
+        variant: 'destructive',
+      });
     }
   };
 
