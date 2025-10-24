@@ -11,6 +11,7 @@ import { Shield, Loader2, Award, Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminPlayers from './AdminPlayers';
 import AdminSchedule from './AdminSchedule';
+import AdminLeagueTeams from './AdminLeagueTeams';
 
 interface Player {
   id: string;
@@ -222,10 +223,11 @@ const Admin = () => {
       </div>
 
       <Tabs defaultValue="stats" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="stats">Stats</TabsTrigger>
           <TabsTrigger value="players">Players</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="teams">League Teams</TabsTrigger>
           <TabsTrigger value="roles">Roles</TabsTrigger>
         </TabsList>
 
@@ -371,6 +373,10 @@ const Admin = () => {
 
         <TabsContent value="schedule">
           <AdminSchedule />
+        </TabsContent>
+
+        <TabsContent value="teams">
+          <AdminLeagueTeams />
         </TabsContent>
 
         <TabsContent value="roles">

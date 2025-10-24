@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      league_teams: {
+        Row: {
+          created_at: string
+          draws: number
+          goals_against: number
+          goals_for: number
+          id: string
+          logo_url: string | null
+          losses: number
+          name: string
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          created_at?: string
+          draws?: number
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          logo_url?: string | null
+          losses?: number
+          name: string
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          created_at?: string
+          draws?: number
+          goals_against?: number
+          goals_for?: number
+          id?: string
+          logo_url?: string | null
+          losses?: number
+          name?: string
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string | null
