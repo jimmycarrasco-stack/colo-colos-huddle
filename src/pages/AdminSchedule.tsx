@@ -74,7 +74,7 @@ const AdminSchedule = () => {
             title: validated.title,
             description: validated.description || null,
             event_type: validated.event_type,
-            event_date: validated.event_date,
+            event_date: new Date(validated.event_date).toISOString(),
             location: validated.location || null,
             created_by: user.id,
           });
@@ -95,7 +95,7 @@ const AdminSchedule = () => {
             title: validated.title,
             description: validated.description || null,
             event_type: validated.event_type,
-            event_date: validated.event_date,
+            event_date: new Date(validated.event_date).toISOString(),
             location: validated.location || null,
           })
           .eq('id', editingEvent.id);
