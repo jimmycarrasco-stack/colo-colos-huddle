@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Send, Loader2, Image, UserCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { z } from 'zod';
+import { PollCard } from '@/components/PollCard';
+import { CreatePollDialog } from '@/components/CreatePollDialog';
 
 interface Profile {
   full_name: string;
@@ -25,8 +27,18 @@ interface Message {
   profiles: Profile | Profile[] | null;
 }
 
+interface Poll {
+  id: string;
+  question: string;
+  options: string[];
+  created_by: string;
+  created_at: string;
+  profiles: Profile | Profile[] | null;
+}
+
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [polls, setPolls] = useState<Poll[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,10 +76,27 @@ const Chat = () => {
       setLoading(false);
     };
 
+    const fetchPolls = async () => {
+      const { data, error } = await supabase
+        .from('polls')
+        .select(`
+          *,
+          profiles (full_name, avatar_url)
+        `)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching polls:', error);
+      } else {
+        setPolls((data || []) as any);
+      }
+    };
+
     fetchMessages();
+    fetchPolls();
 
     // Subscribe to real-time messages
-    const channel = supabase
+    const messagesChannel = supabase
       .channel('messages-changes')
       .on(
         'postgres_changes',
@@ -93,14 +122,42 @@ const Chat = () => {
       )
       .subscribe();
 
+    // Subscribe to real-time polls
+    const pollsChannel = supabase
+      .channel('polls-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'polls'
+        },
+        async (payload) => {
+          const { data } = await supabase
+            .from('polls')
+            .select(`
+              *,
+              profiles (full_name, avatar_url)
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (data) {
+            setPolls((prev) => [...prev, data as any]);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(pollsChannel);
     };
   }, [toast]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, polls]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,58 +251,82 @@ const Chat = () => {
         </CardHeader>
         <CardContent className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.user_id === user?.id ? 'flex-row-reverse' : ''
-                }`}
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={(Array.isArray(message.profiles) ? message.profiles[0]?.avatar_url : message.profiles?.avatar_url) || ''} />
-                  <AvatarFallback>
-                    <UserCircle className="h-6 w-6" />
-                  </AvatarFallback>
-                </Avatar>
-                <div
-                  className={`flex flex-col ${
-                    message.user_id === user?.id ? 'items-end' : 'items-start'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium">
-                      {Array.isArray(message.profiles) ? message.profiles[0]?.full_name : message.profiles?.full_name || 'Unknown'}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(message.created_at), 'HH:mm')}
-                    </span>
-                  </div>
-                  <div
-                    className={`rounded-lg px-3 py-2 max-w-md ${
-                      message.user_id === user?.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-secondary'
-                    }`}
-                  >
-                    {message.content && <p>{message.content}</p>}
-                    {message.media_url && message.media_type === 'image' && (
-                      <img
-                        src={message.media_url}
-                        alt="Shared media"
-                        className="rounded mt-2 max-w-full"
-                      />
-                    )}
-                    {message.media_url && message.media_type === 'video' && (
-                      <video
-                        src={message.media_url}
-                        controls
-                        className="rounded mt-2 max-w-full"
-                      />
-                    )}
+            {[...messages, ...polls.map(p => ({ ...p, type: 'poll' }))].sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            ).map((item: any) => 
+              item.type === 'poll' ? (
+                <div key={item.id} className="flex gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={(Array.isArray(item.profiles) ? item.profiles[0]?.avatar_url : item.profiles?.avatar_url) || ''} />
+                    <AvatarFallback>
+                      <UserCircle className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium">
+                        {Array.isArray(item.profiles) ? item.profiles[0]?.full_name : item.profiles?.full_name || 'Unknown'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(item.created_at), 'HH:mm')}
+                      </span>
+                    </div>
+                    <PollCard poll={item} />
                   </div>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div
+                  key={item.id}
+                  className={`flex gap-3 ${
+                    item.user_id === user?.id ? 'flex-row-reverse' : ''
+                  }`}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={(Array.isArray(item.profiles) ? item.profiles[0]?.avatar_url : item.profiles?.avatar_url) || ''} />
+                    <AvatarFallback>
+                      <UserCircle className="h-6 w-6" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
+                    className={`flex flex-col ${
+                      item.user_id === user?.id ? 'items-end' : 'items-start'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium">
+                        {Array.isArray(item.profiles) ? item.profiles[0]?.full_name : item.profiles?.full_name || 'Unknown'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(item.created_at), 'HH:mm')}
+                      </span>
+                    </div>
+                    <div
+                      className={`rounded-lg px-3 py-2 max-w-md ${
+                        item.user_id === user?.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary'
+                      }`}
+                    >
+                      {item.content && <p>{item.content}</p>}
+                      {item.media_url && item.media_type === 'image' && (
+                        <img
+                          src={item.media_url}
+                          alt="Shared media"
+                          className="rounded mt-2 max-w-full"
+                        />
+                      )}
+                      {item.media_url && item.media_type === 'video' && (
+                        <video
+                          src={item.media_url}
+                          controls
+                          className="rounded mt-2 max-w-full"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -257,6 +338,7 @@ const Chat = () => {
               onChange={(e) => setMediaFile(e.target.files?.[0] || null)}
               className="hidden"
             />
+            <CreatePollDialog />
             <Button
               type="button"
               variant="outline"
