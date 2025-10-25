@@ -153,6 +153,13 @@ export type Database = {
             referencedRelation: "polls"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "poll_votes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       polls: {
@@ -180,7 +187,15 @@ export type Database = {
           options?: string[]
           question?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "polls_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
