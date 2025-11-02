@@ -44,6 +44,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -51,6 +52,38 @@ const Chat = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        setNotificationsEnabled(permission === 'granted');
+      });
+    } else if (Notification.permission === 'granted') {
+      setNotificationsEnabled(true);
+    }
+  }, []);
+
+  const showNotification = (message: Message, profile: Profile | null) => {
+    if (!notificationsEnabled || document.visibilityState === 'visible') {
+      return;
+    }
+
+    const title = profile?.full_name || 'New Message';
+    const body = message.content || 'Sent a media file';
+    
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then((registration) => {
+        registration.showNotification(title, {
+          body,
+          icon: profile?.avatar_url || '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: message.id,
+          requireInteraction: false,
+        });
+      });
+    }
   };
 
   useEffect(() => {
@@ -131,6 +164,13 @@ const Chat = () => {
 
           if (data) {
             setMessages((prev) => [...prev, data as any]);
+            
+            // Show notification for new messages from others
+            const message = data as any as Message;
+            if (message.user_id !== user?.id) {
+              const profile = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles;
+              showNotification(message, profile);
+            }
           }
         }
       )
