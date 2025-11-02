@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { Send, Loader2, Image, UserCircle } from 'lucide-react';
+import { Send, Loader2, Image, UserCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { z } from 'zod';
 import { PollCard } from '@/components/PollCard';
@@ -43,6 +43,7 @@ const Chat = () => {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -53,6 +54,18 @@ const Chat = () => {
   };
 
   useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      setIsAdmin(!!data);
+    };
+
     const fetchMessages = async () => {
       setLoading(true);
       const { data, error } = await supabase
@@ -92,6 +105,7 @@ const Chat = () => {
       }
     };
 
+    checkAdminStatus();
     fetchMessages();
     fetchPolls();
 
@@ -118,6 +132,17 @@ const Chat = () => {
           if (data) {
             setMessages((prev) => [...prev, data as any]);
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          setMessages((prev) => prev.filter(msg => msg.id !== payload.old.id));
         }
       )
       .subscribe();
@@ -158,6 +183,28 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, polls]);
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Message deleted',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete message',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,7 +337,7 @@ const Chat = () => {
                   <div
                     className={`flex flex-col ${
                       item.user_id === user?.id ? 'items-end' : 'items-start'
-                    }`}
+                    } flex-1`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium">
@@ -300,27 +347,39 @@ const Chat = () => {
                         {format(new Date(item.created_at), 'HH:mm')}
                       </span>
                     </div>
-                    <div
-                      className={`rounded-lg px-3 py-2 max-w-md ${
-                        item.user_id === user?.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary'
-                      }`}
-                    >
-                      {item.content && <p>{item.content}</p>}
-                      {item.media_url && item.media_type === 'image' && (
-                        <img
-                          src={item.media_url}
-                          alt="Shared media"
-                          className="rounded mt-2 max-w-full"
-                        />
-                      )}
-                      {item.media_url && item.media_type === 'video' && (
-                        <video
-                          src={item.media_url}
-                          controls
-                          className="rounded mt-2 max-w-full"
-                        />
+                    <div className="flex items-start gap-2">
+                      <div
+                        className={`rounded-lg px-3 py-2 max-w-md ${
+                          item.user_id === user?.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary'
+                        }`}
+                      >
+                        {item.content && <p>{item.content}</p>}
+                        {item.media_url && item.media_type === 'image' && (
+                          <img
+                            src={item.media_url}
+                            alt="Shared media"
+                            className="rounded mt-2 max-w-full"
+                          />
+                        )}
+                        {item.media_url && item.media_type === 'video' && (
+                          <video
+                            src={item.media_url}
+                            controls
+                            className="rounded mt-2 max-w-full"
+                          />
+                        )}
+                      </div>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 hover:opacity-100 transition-opacity"
+                          onClick={() => handleDeleteMessage(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       )}
                     </div>
                   </div>
