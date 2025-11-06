@@ -87,8 +87,9 @@ const Chat = () => {
   };
 
   useEffect(() => {
+    if (!user) return;
+
     const checkAdminStatus = async () => {
-      if (!user) return;
       const { data } = await supabase
         .from('user_roles')
         .select('role')
@@ -218,7 +219,7 @@ const Chat = () => {
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(pollsChannel);
     };
-  }, [toast]);
+  }, [user, toast]);
 
   useEffect(() => {
     scrollToBottom();
