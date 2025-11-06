@@ -2,7 +2,7 @@
   "name": "Colo Colo's Huddle",
   "short_name": "Colo Colo",
   "description": "Team management and communication app",
-  "start_url": "/",
+  "start_url": "/?v=3",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
