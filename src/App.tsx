@@ -8,6 +8,7 @@ import Layout from "@/components/Layout";
 import Auth from "./pages/Auth";
 import Roster from "./pages/Roster";
 import Chat from "./pages/Chat";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Schedule from "./pages/Schedule";
 import Stats from "./pages/Stats";
 import Admin from "./pages/Admin";
@@ -51,7 +52,7 @@ const App = () => (
               }
             >
               <Route index element={<Roster />} />
-              <Route path="chat" element={<Chat />} />
+              <Route path="chat" element={<ErrorBoundary><Chat /></ErrorBoundary>} />
               <Route path="schedule" element={<Schedule />} />
               <Route path="stats" element={<Stats />} />
               <Route path="admin" element={<Admin />} />

@@ -75,23 +75,37 @@ const Chat = () => {
   }, []);
 
   const showNotification = (message: Message, profile: Profile | null) => {
-    if (!notificationsEnabled || document.visibilityState === 'visible') {
-      return;
-    }
+    try {
+      if (!notificationsEnabled) return;
+      const isVisible = typeof document !== 'undefined' && 'visibilityState' in document
+        ? (document as Document).visibilityState === 'visible'
+        : true;
+      if (isVisible) return;
 
-    const title = profile?.full_name || 'New Message';
-    const body = message.content || 'Sent a media file';
-    
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.ready.then((registration) => {
-        registration.showNotification(title, {
-          body,
-          icon: profile?.avatar_url || '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: message.id,
-          requireInteraction: false,
-        });
-      });
+      const title = profile?.full_name || 'New Message';
+      const body = message.content || 'Sent a media file';
+
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((registration) => {
+            if (typeof (registration as any).showNotification === 'function') {
+              try {
+                (registration as any).showNotification(title, {
+                  body,
+                  icon: profile?.avatar_url || '/favicon.ico',
+                  badge: '/favicon.ico',
+                  tag: message.id,
+                  requireInteraction: false,
+                });
+              } catch (err) {
+                console.warn('Notification failed:', err);
+              }
+            }
+          })
+          .catch(() => {/* noop */});
+      }
+    } catch {
+      // noop
     }
   };
 
@@ -348,9 +362,13 @@ const Chat = () => {
         </CardHeader>
         <CardContent className="flex flex-col h-full">
           <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2">
-            {[...messages, ...polls.map(p => ({ ...p, type: 'poll' }))].sort((a, b) => 
-              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            ).map((item: any) => 
+            {[...messages, ...polls.map(p => ({ ...p, type: 'poll' }))]
+              .sort((a, b) => {
+                const at = a?.created_at ? new Date(a.created_at).getTime() : 0;
+                const bt = b?.created_at ? new Date(b.created_at).getTime() : 0;
+                return at - bt;
+              })
+              .map((item: any) => 
               item.type === 'poll' ? (
                 <div key={item.id} className="flex gap-3">
                   <Avatar className="h-8 w-8">
