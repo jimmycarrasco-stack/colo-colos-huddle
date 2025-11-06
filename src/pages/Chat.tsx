@@ -55,13 +55,22 @@ const Chat = () => {
   };
 
   useEffect(() => {
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().then((permission) => {
-        setNotificationsEnabled(permission === 'granted');
-      });
-    } else if (Notification.permission === 'granted') {
-      setNotificationsEnabled(true);
+    // Request notification permission (guarded for PWA/older browsers)
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+          Notification.requestPermission().then((permission) => {
+            setNotificationsEnabled(permission === 'granted');
+          }).catch(() => {
+            setNotificationsEnabled(false);
+          });
+        } else if (Notification.permission === 'granted') {
+          setNotificationsEnabled(true);
+        }
+      }
+    } catch (err) {
+      // Notifications not supported; ignore
+      setNotificationsEnabled(false);
     }
   }, []);
 
