@@ -12,6 +12,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminPlayers from './AdminPlayers';
 import AdminSchedule from './AdminSchedule';
 import AdminLeagueTeams from './AdminLeagueTeams';
+import { z } from 'zod';
+
+const teamStatsSchema = z.object({
+  wins: z.number().int().min(0, "Wins must be at least 0").max(1000, "Wins cannot exceed 1000"),
+  losses: z.number().int().min(0, "Losses must be at least 0").max(1000, "Losses cannot exceed 1000"),
+  draws: z.number().int().min(0, "Draws must be at least 0").max(1000, "Draws cannot exceed 1000"),
+  goals_for: z.number().int().min(0, "Goals for must be at least 0").max(10000, "Goals for cannot exceed 10000"),
+  goals_against: z.number().int().min(0, "Goals against must be at least 0").max(10000, "Goals against cannot exceed 10000"),
+});
+
+const playerStatsSchema = z.object({
+  goals: z.number().int().min(0, "Goals must be at least 0").max(1000, "Goals cannot exceed 1000"),
+  assists: z.number().int().min(0, "Assists must be at least 0").max(1000, "Assists cannot exceed 1000"),
+  games_played: z.number().int().min(0, "Games played must be at least 0").max(500, "Games played cannot exceed 500"),
+});
 
 interface Player {
   id: string;
@@ -91,6 +106,9 @@ const Admin = () => {
     e.preventDefault();
     
     try {
+      // Validate input
+      teamStatsSchema.parse(teamStats);
+
       const { error } = await supabase
         .from('team_stats')
         .update({
@@ -107,11 +125,19 @@ const Admin = () => {
         description: 'The team statistics have been updated successfully.',
       });
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update team stats',
-        variant: 'destructive',
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to update team stats',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -128,6 +154,13 @@ const Admin = () => {
     }
 
     try {
+      // Validate input
+      playerStatsSchema.parse({
+        goals: playerStatUpdate.goals,
+        assists: playerStatUpdate.assists,
+        games_played: playerStatUpdate.games_played,
+      });
+
       const { error } = await supabase
         .from('player_stats')
         .update({
@@ -152,11 +185,19 @@ const Admin = () => {
         games_played: 0,
       });
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update player stats',
-        variant: 'destructive',
-      });
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.errors[0].message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to update player stats',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
