@@ -309,11 +309,13 @@ const Chat = () => {
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from('chat-media')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 31536000); // 1 year expiry
 
-        mediaUrl = publicUrl;
+        if (signedUrlError) throw signedUrlError;
+
+        mediaUrl = signedUrlData.signedUrl;
         mediaType = mediaFile.type.startsWith('image/') ? 'image' : 'video';
       }
 
