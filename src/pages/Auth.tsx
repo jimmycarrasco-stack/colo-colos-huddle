@@ -53,7 +53,13 @@ const Auth = () => {
       if (!isLogin) {
         const signupSchema = z.object({
           email: z.string().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
-          password: z.string().min(6, 'Password must be at least 6 characters'),
+          password: z.string()
+            .min(8, 'Password must be at least 8 characters')
+            .max(128, 'Password must be less than 128 characters')
+            .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+            .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+            .regex(/[0-9]/, 'Password must contain at least one number')
+            .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
           fullName: z.string().trim().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
           position: z.string().trim().max(50, 'Position must be less than 50 characters').optional(),
         });
@@ -64,6 +70,18 @@ const Auth = () => {
           fullName: fullName,
           position: position || undefined,
         });
+
+        // Check if password has been breached
+        const { data: breachData, error: breachError } = await supabase.functions.invoke('check-password-breach', {
+          body: { password }
+        });
+
+        if (breachError) {
+          console.warn('Password breach check failed:', breachError);
+          // Continue with signup if breach check fails (fail open for availability)
+        } else if (breachData?.breached) {
+          throw new Error(breachData.message || 'This password has been exposed in data breaches. Please choose a different password.');
+        }
 
         // Validate avatar file size (5MB limit)
         if (avatarFile && avatarFile.size > 5 * 1024 * 1024) {
@@ -223,11 +241,11 @@ const Auth = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder={isLogin ? "Enter your password" : "Min 8 chars, upper/lower/number/special"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={isLogin ? 6 : 8}
                   className="pr-10"
                 />
                 <button
@@ -238,6 +256,11 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {!isLogin && (
+                <p className="text-xs text-muted-foreground">
+                  Must include uppercase, lowercase, number, and special character
+                </p>
+              )}
             </div>
             {!isLogin && (
               <div className="space-y-2">
@@ -250,7 +273,7 @@ const Auth = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required={!isLogin}
-                    minLength={6}
+                    minLength={8}
                     className="pr-10"
                   />
                   <button
